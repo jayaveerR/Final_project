@@ -1,0 +1,17 @@
+[package]
+name = "aptos"
+version = "1.0.0"
+authors = []
+
+[addresses]
+student_registry="0x9e714f0b685a389cdfc3898fa8e9afa6db6f6966c90c88a21760c2fea99a9ca9"
+
+[dev-addresses]
+student_registry="0x9e714f0b685a389cdfc3898fa8e9afa6db6f6966c90c88a21760c2fea99a9ca9"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-framework"
+
+[dev-dependencies]
