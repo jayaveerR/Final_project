@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Building, Hash, CreditCard, DollarSign } from 'lucide-react';
+import { User, Building, Hash, CreditCard, DollarSign } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { shortenAddress, sendTransaction } from '../utils/wallet';
 import { StudentDetails } from '../types';
@@ -21,14 +21,9 @@ const HomePage: React.FC = () => {
     amount: 0
   });
 
-  const feeTypes = [
-    'College Fee',
-    'Event Fee',
-    'CRT Fee',
-    'Hostel Fee',
-    'Others'
-  ];
+  const feeTypes = ['College Fee', 'Event Fee', 'CRT Fee', 'Hostel Fee', 'Others'];
 
+  // Logout / Disconnect
   const handleLogout = () => {
     setWalletState({ connected: false, address: null, balance: 0 });
     navigate('/');
@@ -39,7 +34,7 @@ const HomePage: React.FC = () => {
   };
 
   const handlePayFee = async () => {
-    if (!studentDetails.studentName || !studentDetails.collegeName || 
+    if (!studentDetails.studentName || !studentDetails.collegeName ||
         !studentDetails.rollNumber || !studentDetails.amount) {
       alert('Please fill all fields');
       return;
@@ -51,34 +46,33 @@ const HomePage: React.FC = () => {
     }
 
     setLoading(true);
-    
-    // Demo transaction to a test address (in production, this would be the institution's wallet)
-    const institutionAddress = '0x1'; // Replace with actual institution wallet
-    
+
+    const institutionAddress = '0x1'; // Replace with actual wallet address
+
     try {
       const result = await sendTransaction(institutionAddress, studentDetails.amount);
-      
+
       if (result.success) {
-        navigate('/success', { 
-          state: { 
-            studentDetails, 
-            transactionHash: result.hash 
-          } 
+        navigate('/success', {
+          state: {
+            studentDetails,
+            transactionHash: result.hash
+          }
         });
       } else {
-        navigate('/failed', { 
-          state: { 
+        navigate('/failed', {
+          state: {
             error: result.error,
-            studentDetails 
-          } 
+            studentDetails
+          }
         });
       }
     } catch (error) {
-      navigate('/failed', { 
-        state: { 
+      navigate('/failed', {
+        state: {
           error: 'Transaction failed',
-          studentDetails 
-        } 
+          studentDetails
+        }
       });
     } finally {
       setLoading(false);
@@ -88,7 +82,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-all duration-500">
       <ThemeToggle />
-      
+
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -97,27 +91,25 @@ const HomePage: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-white" />
-            </div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               AptosEdu Pay
             </h1>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <div className="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
               <span className="text-sm font-medium text-gray-900 dark:text-white">
                 {shortenAddress(walletState.address || '')}
               </span>
             </div>
+            {/* Disconnect Button */}
             <motion.button
               onClick={handleLogout}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors"
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <LogOut className="w-5 h-5" />
+              Disconnect
             </motion.button>
           </div>
         </div>
@@ -142,14 +134,9 @@ const HomePage: React.FC = () => {
 
           <div className="space-y-6">
             {/* Student Name */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <User className="w-4 h-4 inline mr-2" />
-                Student Name
+                <User className="w-4 h-4 inline mr-2" /> Student Name
               </label>
               <input
                 type="text"
@@ -161,14 +148,9 @@ const HomePage: React.FC = () => {
             </motion.div>
 
             {/* College Name */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Building className="w-4 h-4 inline mr-2" />
-                College Name
+                <Building className="w-4 h-4 inline mr-2" /> College Name
               </label>
               <input
                 type="text"
@@ -178,58 +160,41 @@ const HomePage: React.FC = () => {
                 placeholder="Enter your college name"
               />
             </motion.div>
-                   {/* Year */}
-<motion.div
-  initial={{ opacity: 0, x: -20 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ delay: 0.55 }}
->
-  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-    Year
-  </label>
-  <input
-    type="text"
-    value={studentDetails.year || ''}
-    onChange={(e) => handleInputChange('year', e.target.value)}
-    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white"
-    placeholder="e.g., 1st Year, 2nd Year"
-  />
-</motion.div>
 
-{/* Course */}
-<motion.div
-  initial={{ opacity: 0, x: -20 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ delay: 0.575 }}
->
-  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-    Course
-  </label>
-  <select
-    value={studentDetails.course || ''}
-    onChange={(e) => handleInputChange('course', e.target.value)}
-    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white"
-  >
-    <option value="">Select Course</option>
-    <option value="B.Tech">B.Tech</option>
-    <option value="M.Tech">M.Tech</option>
-    <option value="B.Sc">B.Sc</option>
-    <option value="M.Sc">M.Sc</option>
-    <option value="MBA">MBA</option>
-    <option value="Other">Other</option>
-  </select>
-</motion.div>
+            {/* Year */}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 }}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Year</label>
+              <input
+                type="text"
+                value={studentDetails.year || ''}
+                onChange={(e) => handleInputChange('year', e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white"
+                placeholder="e.g., 1st Year, 2nd Year"
+              />
+            </motion.div>
 
+            {/* Course */}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.575 }}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course</label>
+              <select
+                value={studentDetails.course || ''}
+                onChange={(e) => handleInputChange('course', e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white"
+              >
+                <option value="">Select Course</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="B.Sc">B.Sc</option>
+                <option value="M.Sc">M.Sc</option>
+                <option value="MBA">MBA</option>
+                <option value="Other">Other</option>
+              </select>
+            </motion.div>
 
             {/* Roll Number */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Hash className="w-4 h-4 inline mr-2" />
-                Roll Number
+                <Hash className="w-4 h-4 inline mr-2" /> Roll Number
               </label>
               <input
                 type="text"
@@ -241,14 +206,9 @@ const HomePage: React.FC = () => {
             </motion.div>
 
             {/* Fee Type */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <CreditCard className="w-4 h-4 inline mr-2" />
-                Fee Type
+                <CreditCard className="w-4 h-4 inline mr-2" /> Fee Type
               </label>
               <select
                 value={studentDetails.feeType}
@@ -262,14 +222,9 @@ const HomePage: React.FC = () => {
             </motion.div>
 
             {/* Amount */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 }}
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <DollarSign className="w-4 h-4 inline mr-2" />
-                Amount (APT)
+                <DollarSign className="w-4 h-4 inline mr-2" /> Amount (APT)
               </label>
               <input
                 type="number"

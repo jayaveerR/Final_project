@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { useWallet } from './hooks/useWallet';
@@ -13,36 +13,34 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/" 
-          element={
-            walletState.connected ? <Navigate to="/home" replace /> : <LoginPage />
-          } 
-        />
-        <Route 
-          path="/" 
-          element={
-            walletState.connected ? <HomePage /> : <Navigate to="/" replace />  
-          } 
-        />
-        <Route 
-          path="/home" 
+        {/* Default → LoginPage */}
+        <Route path="/" element={<LoginPage />} />
+
+        {/* Home page → only if wallet connected */}
+        <Route
+          path="/home"
           element={
             walletState.connected ? <HomePage /> : <Navigate to="/" replace />
           }
         />
-        <Route 
-          path="/success" 
+
+        {/* Success page */}
+        <Route
+          path="/success"
           element={
             walletState.connected ? <SuccessPage /> : <Navigate to="/" replace />
-          } 
+          }
         />
-        <Route 
-          path="/failed" 
+
+        {/* Failed page */}
+        <Route
+          path="/failed"
           element={
-            walletState.connected ? <FailedPage /> : <Navigate to="/LoginPage" replace />
-          } 
+            walletState.connected ? <FailedPage /> : <Navigate to="/" replace />
+          }
         />
+
+        {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

@@ -6,20 +6,24 @@ export const aptos = new Aptos(config);
 
 // Check if Petra Wallet is installed
 export const isPetraInstalled = (): boolean => {
-  return !!(window as any).aptos;
+  return typeof window !== 'undefined' && !!(window as any).aptos;
 };
 
 // Connect to Petra Wallet
 export const connectPetraWallet = async (): Promise<string> => {
   if (!isPetraInstalled()) {
-    throw new Error('Petra Wallet is not installed');
+    throw new Error('Petra Wallet is not installed. Please install it first.');
   }
 
   try {
+    // If already connected, return the existing address
+    const existing = await getWalletAddress();
+    if (existing) return existing;
+
     const response = await (window as any).aptos.connect();
     return response.address;
-  } catch (error) {
-    throw new Error('Failed to connect to Petra Wallet');
+  } catch (error: any) {
+    throw new Error(error?.message || 'Failed to connect to Petra Wallet');
   }
 };
 
@@ -29,13 +33,13 @@ export const getWalletAddress = async (): Promise<string | null> => {
 
   try {
     const response = await (window as any).aptos.account();
-    return response.address;
-  } catch (error) {
+    return response?.address || null;
+  } catch {
     return null;
   }
 };
 
-// Get wallet balance
+// Get wallet balance (APT)
 export const getWalletBalance = async (address: string): Promise<number> => {
   try {
     const resources = await aptos.getAccountResources({ accountAddress: address });
@@ -45,15 +49,15 @@ export const getWalletBalance = async (address: string): Promise<number> => {
 
     if (coinResource) {
       const balance = (coinResource.data as any).coin.value;
-      return parseInt(balance) / 100000000; // Convert from Octas to APT
+      return Number(balance) / 1e8; // Convert Octas → APT
     }
     return 0;
-  } catch (error) {
+  } catch {
     return 0;
   }
 };
 
-// Send transaction
+// Send transaction (APT transfer)
 export const sendTransaction = async (
   toAddress: string,
   amount: number
@@ -63,31 +67,31 @@ export const sendTransaction = async (
   }
 
   try {
-    const amountInOctas = Math.floor(amount * 100000000); // Convert APT to Octas
+    const amountInOctas = Math.floor(amount * 1e8);
 
     const transaction = {
       type: 'entry_function_payload',
       function: '0x1::coin::transfer',
       type_arguments: ['0x1::aptos_coin::AptosCoin'],
-      arguments: [toAddress, amountInOctas.toString()]
+      arguments: [toAddress, amountInOctas.toString()],
     };
 
     const response = await (window as any).aptos.signAndSubmitTransaction(transaction);
-    return { success: true, hash: response.hash };
+    return { success: true, hash: response?.hash };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Transaction failed' };
+    return { success: false, error: error?.message || 'Transaction failed' };
   }
 };
 
 // Disconnect Petra Wallet
 export const disconnectPetraWallet = async (): Promise<void> => {
-  const aptos = (window as any).aptos;
-  if (aptos && aptos.disconnect) {
-    await aptos.disconnect();
+  const petra = (window as any).aptos;
+  if (petra?.disconnect) {
+    await petra.disconnect();
   }
 };
 
-// Shorten wallet address (for UI)
+// Shorten wallet address for UI
 export const shortenAddress = (address: string): string => {
   if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
