@@ -23,7 +23,6 @@ const HomePage: React.FC = () => {
 
   const feeTypes = ['College Fee', 'Event Fee', 'CRT Fee', 'Hostel Fee', 'Others'];
 
-  // Logout / Disconnect
   const handleLogout = () => {
     setWalletState({ connected: false, address: null, balance: 0 });
     navigate('/');
@@ -47,7 +46,7 @@ const HomePage: React.FC = () => {
 
     setLoading(true);
 
-    const institutionAddress = '0x1'; // Replace with actual wallet address
+    const institutionAddress = '0x1';
 
     try {
       const result = await sendTransaction(institutionAddress, studentDetails.amount);
@@ -79,6 +78,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-all duration-500">
       <ThemeToggle />
@@ -102,6 +102,17 @@ const HomePage: React.FC = () => {
                 {shortenAddress(walletState.address || '')}
               </span>
             </div>
+
+            {/* Admin Button */}
+            <motion.button
+              onClick={() => navigate('/admin')}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Admin
+            </motion.button>
+
             {/* Disconnect Button */}
             <motion.button
               onClick={handleLogout}

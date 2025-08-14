@@ -1,33 +1,31 @@
 import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 
-// Initialize Aptos client (Testnet for now)
+// ===== Aptos Client Setup (Testnet for now) =====
 const config = new AptosConfig({ network: Network.TESTNET });
 export const aptos = new Aptos(config);
 
-// Check if Petra Wallet is installed
+// ===== Utility: Check Petra Wallet =====
 export const isPetraInstalled = (): boolean => {
   return typeof window !== 'undefined' && !!(window as any).aptos;
 };
 
-// Connect to Petra Wallet
+// ===== Connect to Petra Wallet =====
 export const connectPetraWallet = async (): Promise<string> => {
   if (!isPetraInstalled()) {
-    throw new Error('Petra Wallet is not installed. Please install it first.');
+    throw new Error('Petra Wallet is not installed. Please install it from https://petra.app/');
   }
 
   try {
-    // If already connected, return the existing address
-    const existing = await getWalletAddress();
-    if (existing) return existing;
-
     const response = await (window as any).aptos.connect();
+    if (!response?.address) throw new Error('No address returned from Petra Wallet');
     return response.address;
   } catch (error: any) {
+    console.error('Petra Wallet connection failed:', error);
     throw new Error(error?.message || 'Failed to connect to Petra Wallet');
   }
 };
 
-// Get wallet address (if already connected)
+// ===== Get Wallet Address (if already connected) =====
 export const getWalletAddress = async (): Promise<string | null> => {
   if (!isPetraInstalled()) return null;
 
@@ -35,29 +33,31 @@ export const getWalletAddress = async (): Promise<string | null> => {
     const response = await (window as any).aptos.account();
     return response?.address || null;
   } catch {
-    return null;
+    return null; // Not connected
   }
 };
 
-// Get wallet balance (APT)
+// ===== Get Wallet Balance =====
 export const getWalletBalance = async (address: string): Promise<number> => {
+  if (!address) return 0;
+
   try {
     const resources = await aptos.getAccountResources({ accountAddress: address });
     const coinResource = resources.find(
       (r) => r.type === '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>'
     );
 
-    if (coinResource) {
-      const balance = (coinResource.data as any).coin.value;
-      return Number(balance) / 1e8; // Convert Octas → APT
-    }
-    return 0;
-  } catch {
+    if (!coinResource) return 0;
+
+    const balance = (coinResource.data as any)?.coin?.value || '0';
+    return parseInt(balance, 10) / 100_000_000; // Convert from Octas to APT
+  } catch (error) {
+    console.error('Error fetching wallet balance:', error);
     return 0;
   }
 };
 
-// Send transaction (APT transfer)
+// ===== Send Transaction =====
 export const sendTransaction = async (
   toAddress: string,
   amount: number
@@ -66,8 +66,12 @@ export const sendTransaction = async (
     return { success: false, error: 'Petra Wallet not installed' };
   }
 
+  if (!toAddress || amount <= 0) {
+    return { success: false, error: 'Invalid recipient address or amount' };
+  }
+
   try {
-    const amountInOctas = Math.floor(amount * 1e8);
+    const amountInOctas = Math.floor(amount * 100_000_000); // Convert APT → Octas
 
     const transaction = {
       type: 'entry_function_payload',
@@ -77,21 +81,27 @@ export const sendTransaction = async (
     };
 
     const response = await (window as any).aptos.signAndSubmitTransaction(transaction);
-    return { success: true, hash: response?.hash };
+
+    if (!response?.hash) {
+      return { success: false, error: 'Transaction submitted but no hash returned' };
+    }
+
+    return { success: true, hash: response.hash };
   } catch (error: any) {
+    console.error('Transaction failed:', error);
     return { success: false, error: error?.message || 'Transaction failed' };
   }
 };
 
-// Disconnect Petra Wallet
+// ===== Disconnect Petra Wallet =====
 export const disconnectPetraWallet = async (): Promise<void> => {
-  const petra = (window as any).aptos;
-  if (petra?.disconnect) {
-    await petra.disconnect();
+  const aptosWallet = (window as any).aptos;
+  if (aptosWallet?.disconnect) {
+    await aptosWallet.disconnect();
   }
 };
 
-// Shorten wallet address for UI
+// ===== Shorten Wallet Address for UI =====
 export const shortenAddress = (address: string): string => {
   if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;

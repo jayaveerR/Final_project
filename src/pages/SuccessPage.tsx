@@ -1,18 +1,41 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, Download, Home, Copy } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { StudentDetails } from '../types';
+import axios from 'axios';
 import ThemeToggle from '../components/ThemeToggle';
+import { StudentDetails } from '../types';
 
 const SuccessPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { studentDetails, transactionHash } = location.state || {};
+
+  // UseMemo to avoid re-reading location.state on every render
+  const { studentDetails, transactionHash } = useMemo(() => {
+    return location.state || {};
+  }, [location.state]);
+
+  // ✅ Save payment to backend when page loads
+  useEffect(() => {
+    if (studentDetails && transactionHash) {
+      axios.post('http://localhost:5000/api/payments', {
+        ...studentDetails,
+        transactionHash,
+        status: 'success',
+        date: new Date().toISOString()
+      })
+      .then(() => {
+        console.log('Payment saved successfully');
+      })
+      .catch(err => {
+        console.error('Error saving payment:', err);
+      });
+    }
+  }, [studentDetails, transactionHash]);
 
   const handleGoHome = () => {
-    navigate('/home');
+    navigate('/home', { replace: true });
   };
 
   const handleCopyHash = () => {
@@ -26,17 +49,12 @@ const SuccessPage: React.FC = () => {
     if (!studentDetails) return;
 
     const doc = new jsPDF();
-    
-    // Header
     doc.setFontSize(20);
     doc.text('AptosEdu Pay', 20, 30);
     doc.setFontSize(16);
     doc.text('Payment Receipt', 20, 45);
-    
-    // Line separator
     doc.line(20, 55, 190, 55);
-    
-    // Student details
+
     doc.setFontSize(12);
     doc.text(`Student Name: ${studentDetails.studentName}`, 20, 70);
     doc.text(`College Name: ${studentDetails.collegeName}`, 20, 85);
@@ -47,14 +65,14 @@ const SuccessPage: React.FC = () => {
     doc.text(`Amount: ${studentDetails.amount} APT`, 20, 160);
 
     if (transactionHash) {
-      doc.text(`Transaction Hash:`, 20, 145);
+      doc.text(`Transaction Hash:`, 20, 175);
       doc.setFontSize(10);
-      doc.text(transactionHash, 20, 155);
+      doc.text(transactionHash, 20, 185);
     }
-    
-    doc.text(`Date: ${new Date().toLocaleString()}`, 20, 170);
-    doc.text(`Status: Payment Successful`, 20, 185);
-    
+
+    doc.text(`Date: ${new Date().toLocaleString()}`, 20, 200);
+    doc.text(`Status: Payment Successful`, 20, 215);
+
     doc.save('payment-receipt.pdf');
   };
 
@@ -79,7 +97,6 @@ const SuccessPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-teal-900 flex items-center justify-center p-4 transition-all duration-500">
       <ThemeToggle />
-      
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -124,42 +141,20 @@ const SuccessPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Transaction Details
           </h3>
-          
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Student:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.studentName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">College:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.collegeName}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Year:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.year}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Roll Number:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.rollNumber}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Course:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.course}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Fee Type:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{studentDetails.feeType}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Amount:</span>
-              <span className="font-bold text-green-600 dark:text-green-400">{studentDetails.amount} APT</span>
-            </div>
-            
+            <Detail label="Student" value={studentDetails.studentName} />
+            <Detail label="College" value={studentDetails.collegeName} />
+            <Detail label="Year" value={studentDetails.year} />
+            <Detail label="Roll Number" value={studentDetails.rollNumber} />
+            <Detail label="Course" value={studentDetails.course} />
+            <Detail label="Fee Type" value={studentDetails.feeType} />
+            <Detail label="Amount" value={`${studentDetails.amount} APT`} highlight />
             {transactionHash && (
               <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Transaction Hash:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Transaction Hash:
+                  </span>
                   <button
                     onClick={handleCopyHash}
                     className="p-1 text-gray-500 hover:text-blue-500 transition-colors"
@@ -189,7 +184,6 @@ const SuccessPage: React.FC = () => {
             <Download className="w-5 h-5" />
             <span>Download Receipt</span>
           </button>
-          
           <button
             onClick={handleGoHome}
             className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300"
@@ -202,5 +196,14 @@ const SuccessPage: React.FC = () => {
     </div>
   );
 };
+
+const Detail = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
+  <div className="flex justify-between">
+    <span className="text-gray-600 dark:text-gray-300">{label}:</span>
+    <span className={`font-medium ${highlight ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-900 dark:text-white'}`}>
+      {value}
+    </span>
+  </div>
+);
 
 export default SuccessPage;
