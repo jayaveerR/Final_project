@@ -1,58 +1,69 @@
-// src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import { StudentProvider } from './context/StudentContext';
 import { useWallet } from './hooks/useWallet';
-
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import SuccessPage from './pages/SuccessPage';
 import FailedPage from './pages/FailedPage';
-import AdminLoginPage from './pages/AdminLoginPage';
-import AdminDashboard from './pages/AdminDashboard';
-
+import AdminLoginPage from './pages/AdminLoginPage'; // ✅ Import this at the top
+import AdminDashboard from './pages/AdminDashboard'; // ✅ Add this
+import { StudentProvider } from './context/StudentContext';
 const AppContent: React.FC = () => {
   const { walletState } = useWallet();
 
   return (
     <Router>
       <Routes>
+        {/* Default → LoginPage */}
         <Route path="/" element={<LoginPage />} />
 
+        {/* Home page → only if wallet connected */}
         <Route
           path="/home"
-          element={walletState.connected ? <HomePage /> : <Navigate to="/" replace />}
+          element={
+            walletState.connected ? <HomePage /> : <Navigate to="/" replace />
+          }
         />
 
+        {/* Success page */}
         <Route
           path="/success"
-          element={walletState.connected ? <SuccessPage /> : <Navigate to="/" replace />}
+          element={
+            walletState.connected ? <SuccessPage /> : <Navigate to="/" replace />
+          }
         />
 
+        {/* Failed page */}
         <Route
           path="/failed"
-          element={walletState.connected ? <FailedPage /> : <Navigate to="/" replace />}
+          element={
+            walletState.connected ? <FailedPage /> : <Navigate to="/" replace />
+          }
         />
-
-        {/* Admin routes */}
+            {/* Admin routes */}
         <Route path="/admin" element={<AdminLoginPage />} />
+
+        {/* Add this */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
+        {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      
     </Router>
   );
 };
 
-export default function App() {
+function App() {
   return (
     <ThemeProvider>
-      <StudentProvider>
-        <div className="App">
-          <AppContent />
-        </div>
-      </StudentProvider>
+      <div className="App">
+        <AppContent />
+      </div>
     </ThemeProvider>
   );
 }
+
+export default App;
